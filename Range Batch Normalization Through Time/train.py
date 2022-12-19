@@ -1,9 +1,4 @@
-#############################################
-#   @author: Youngeun Kim and Priya Panda   #
-#############################################
-#--------------------------------------------------
-# Imports
-#--------------------------------------------------
+
 import torch.optim as optim
 import torchvision
 from   torch.utils.data.dataloader import DataLoader
@@ -21,9 +16,7 @@ from utills import *
 cudnn.benchmark = True
 cudnn.deterministic = True
 
-#--------------------------------------------------
-# Parse input arguments
-#--------------------------------------------------
+
 parser = argparse.ArgumentParser(description='SNN trained with BNTT', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--seed',                  default=0,        type=int,   help='Random seed')
 parser.add_argument('--num_steps',             default=25,    type=int, help='Number of time-step')
@@ -42,9 +35,6 @@ global args
 args = parser.parse_args()
 
 
-#--------------------------------------------------
-# Initialize tensorboard setting
-#--------------------------------------------------
 log_dir = 'modelsave'
 if os.path.isdir(log_dir) is not True:
     os.mkdir(log_dir)
@@ -53,32 +43,20 @@ if os.path.isdir(log_dir) is not True:
 user_foldername = (args.dataset)+(args.arch)+'_timestep'+str(args.num_steps) +'_lr'+str(args.lr) + '_epoch' + str(args.num_epochs) + '_leak' + str(args.leak_mem)
 
 
-
-#--------------------------------------------------
-# Initialize seed
-#--------------------------------------------------
 seed = args.seed
 np.random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 
-#--------------------------------------------------
-# SNN configuration parameters
-#--------------------------------------------------
-# Leaky-Integrate-and-Fire (LIF) neuron parameters
 leak_mem = args.leak_mem
 
-# SNN learning and evaluation parameters
+
 batch_size      = args.batch_size
 batch_size_test = args.batch_size*2
 num_epochs      = args.num_epochs
 num_steps       = args.num_steps
 lr   = args.lr
 
-
-#--------------------------------------------------
-# Load  dataset
-#--------------------------------------------------
 
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
@@ -119,10 +97,6 @@ trainloader = torch.utils.data.DataLoader(train_set, batch_size=args.batch_size,
 testloader = torch.utils.data.DataLoader(test_set, batch_size=args.batch_size*2, shuffle=False, num_workers=args.num_workers, pin_memory=True, drop_last=True)
 
 
-
-#--------------------------------------------------
-# Instantiate the SNN model and optimizer
-#--------------------------------------------------
 if args.arch == 'vgg9': 
     model = SNN_VGG9_RBNTT(num_steps = num_steps, leak_mem=leak_mem, img_size=img_size,  num_cls=num_cls)
 elif args.arch == 'vgg11':
@@ -133,13 +107,11 @@ else:
 
 model = model.cuda()
 
-# Configure the loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=args.lr,momentum=0.9,weight_decay=1e-4)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.1)
 best_acc = 0
 
-# Print the SNN model, optimizer, and simulation parameters
 print('********** SNN simulation parameters **********')
 print('Simulation # time-step : {}'.format(num_steps))
 print('Membrane decay rate : {0:.2f}\n'.format(leak_mem))
@@ -151,9 +123,7 @@ print('Batch size (testing)   : {}'.format(batch_size_test))
 print('Number of epochs       : {}'.format(num_epochs))
 print('Learning rate          : {}'.format(lr))
 
-#--------------------------------------------------
-# Train the SNN using surrogate gradients
-#--------------------------------------------------
+
 print('********** SNN training and evaluation **********')
 train_loss_list = []
 test_acc_list = []
